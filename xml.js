@@ -34,16 +34,16 @@ const parseTrend = datasets => nearY => {
   if (notEnough) startIndex = 0;
   // let prev = datasets[startIndex].value;
   // console.log(datasets[startIndex].date, '-', last.date);
-  const subSet = datasets.slice(startIndex);
-  const result = regression.linear(subSet.map((d, i) => [i, d.value]));
-  const gradient = result.equation[0];
-  const yIntercept = result.equation[1];
+  const subSet = datasets.slice(startIndex).map((d, i) => [i, d.value]);
   return {
     startIndex,
-    gradient,
-    yIntercept,
-    r2: result.r2,
     notEnough,
+    ...['linear', 'exponential'].reduce((regs, type) => {
+      const result = regression[type](subSet);
+      regs[`${type}Equation`] = result.equation;
+      regs[`${type}R2`] = result.r2;
+      return regs;
+    }, {}),
   };
 };
 

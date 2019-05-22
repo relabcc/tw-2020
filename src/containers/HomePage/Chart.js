@@ -18,17 +18,22 @@ const getDateTransformer = id => d => {
   return format(d, 'YYYY');
 };
 
-const Chart = ({ data, row: { id, index, startIndex, yIntercept, gradient } }) => {
+const Chart = ({
+  data,
+  row: { id, index, startIndex, linearEquation, exponentialEquation },
+  regressionType,
+}) => {
   const seri = get(data, [id, 'datasets', index, 'values']);
   if (seri && seri.length) {
     return <Box p="25px">
       <LineChart
         width={300}
-        height={200}
+        height={150}
         data={seri}
         startIndex={startIndex}
-        yIntercept={yIntercept}
-        gradient={gradient}
+        linearEquation={linearEquation}
+        exponentialEquation={exponentialEquation}
+        regressionType={regressionType}
         dateFormater={getDateTransformer(id)}
       />
     </Box>

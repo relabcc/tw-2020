@@ -42,8 +42,9 @@ class LineChart extends PureComponent {
       tooltipLeft,
       dateFormater,
       startIndex,
-      yIntercept,
-      gradient,
+      linearEquation,
+      exponentialEquation,
+      regressionType,
     } = this.props;
 
     // bounds
@@ -61,7 +62,6 @@ class LineChart extends PureComponent {
     });
 
     const subSet = data.slice(startIndex);
-
     return (
       <div>
         <svg width={width} height={height}>
@@ -80,14 +80,30 @@ class LineChart extends PureComponent {
             stroke="black"
             strokeWidth={2}
           />
-          <Line
-            from={{ x: xScale(xValue(subSet[0])), y: yScale(yIntercept) }}
-            to={{ x: xMax, y: yScale(yIntercept + (gradient * subSet.length)) }}
-            stroke={theme.colors.primary}
-            strokeWidth={2}
-            style={{ pointerEvents: 'none' }}
-            opacity={0.5}
-          />
+          {regressionType === 'linear' && (
+            <Line
+              from={{ x: xScale(xValue(subSet[0])), y: yScale(linearEquation[1]) }}
+              to={{ x: xMax, y: yScale(linearEquation[1] + (linearEquation[0] * subSet.length)) }}
+              stroke={theme.colors.primary}
+              strokeWidth={2}
+              style={{ pointerEvents: 'none' }}
+              opacity={0.5}
+            />
+          )}
+          {regressionType === 'exponential' && (
+            <LinePath
+              data={subSet.map((d, i) => ({
+                ...d,
+                value: exponentialEquation[0] * Math.exp(exponentialEquation[1] * i)
+              }))}
+              x={dd => xScale(xValue(dd))}
+              y={dd => yScale(yValue(dd))}
+              stroke={theme.colors.primary}
+              strokeWidth={2}
+              style={{ pointerEvents: 'none' }}
+              opacity={0.5}
+            />
+          )}
           <Bar
             x={0}
             y={0}
