@@ -29,16 +29,25 @@ const getDateTransformer = id => dateString => {
 
 const parseTrend = datasets => nearY => {
   const last = datasets[datasets.length - 1];
-  let startIndex = datasets.findIndex(d => new Date(d.date) > subYears(last.date, nearY)) - 1;
+  if (!last) {
+    return {
+      notEnough: true,
+    };
+  }
+  const yearsAgo = subYears(new Date(last.date), nearY);
+  let startIndex = -1;
+  if (new Date(datasets[0].date) <= yearsAgo) {
+    startIndex = datasets.findIndex(d => new Date(d.date) >= yearsAgo);
+  }
   const notEnough = startIndex === -1;
   if (notEnough) startIndex = 0;
   // let prev = datasets[startIndex].value;
   // console.log(datasets[startIndex].date, '-', last.date);
-  const subSet = datasets.slice(startIndex).map((d, i) => [i, d.value]);
+  const subSet = datasets.slice(startIndex).map((d, i) => [i + 1, d.value]);
   return {
     startIndex,
     notEnough,
-    ...['linear', 'exponential'].reduce((regs, type) => {
+    ...['linear', 'exponential', 'logarithmic', 'power'].reduce((regs, type) => {
       const result = regression[type](subSet);
       regs[`${type}Equation`] = result.equation;
       regs[`${type}R2`] = result.r2;
@@ -71,16 +80,17 @@ const handleFile = (file, i, { length }) => new Promise((res, rej) => {
         date: dt(o.$.TIME_PERIOD),
         value,
       };
-    }).filter(({ value }) => !isNaN(value));
+    });
     // if (values.some((v) => isNaN(v.value))) console.log(file, tableName, values)
     datasets.push({
       name: tableName,
       values,
     });
     const trend = parseTrend(values);
+    const index = datasets.length - 1;
     allData.push({
       ...data,
-      index: datasets.length - 1,
+      index,
       tableName,
       ...trend(20),
       // trends: [5, 10, 20].map(years => ({
@@ -90,8 +100,6 @@ const handleFile = (file, i, { length }) => new Promise((res, rej) => {
     });
   });
   xml.on('end', () => {
-    // console.log(inspect(datasets, { depth: Infinity }));
-    // console.log(inspect(allData, { depth: Infinity }));
     fs.writeFile(path.resolve(__dirname, `./static/data/${data.id}.json`), JSON.stringify({
       ...data,
       datasets,
@@ -105,7 +113,7 @@ const handleFile = (file, i, { length }) => new Promise((res, rej) => {
     });
   });
 });
-// handleFile(path.join(__dirname, './xml/ES0107A2Q.xml'), 1, [1])
+// handleFile(path.join(__dirname, './xml/ES0106A1A.xml'), 1, [1])
 glob(path.resolve(__dirname, './xml/*.xml'), (err, list) => Promise.all(list.map(handleFile)).then(() => {
   fs.writeFile(path.resolve(__dirname, './src/allData.json'), JSON.stringify(allData), (error) => {
     if (error) console.error(error);

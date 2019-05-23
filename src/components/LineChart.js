@@ -4,6 +4,7 @@ import { scaleTime, scaleLinear } from '@vx/scale';
 import { withTooltip, Tooltip } from '@vx/tooltip';
 import { localPoint } from '@vx/event';
 import { extent, bisector } from 'd3-array';
+import { curveMonotoneX } from '@vx/curve';
 
 import theme from './ThemeProvider/theme';
 
@@ -42,9 +43,7 @@ class LineChart extends PureComponent {
       tooltipLeft,
       dateFormater,
       startIndex,
-      linearEquation,
-      exponentialEquation,
-      regressionType,
+      regressionFormula,
     } = this.props;
 
     // bounds
@@ -80,28 +79,16 @@ class LineChart extends PureComponent {
             stroke="black"
             strokeWidth={2}
           />
-          {regressionType === 'linear' && (
-            <Line
-              from={{ x: xScale(xValue(subSet[0])), y: yScale(linearEquation[1]) }}
-              to={{ x: xMax, y: yScale(linearEquation[1] + (linearEquation[0] * subSet.length)) }}
-              stroke={theme.colors.primary}
-              strokeWidth={2}
-              style={{ pointerEvents: 'none' }}
-              opacity={0.5}
-            />
-          )}
-          {regressionType === 'exponential' && (
+          {regressionFormula && (
             <LinePath
-              data={subSet.map((d, i) => ({
-                ...d,
-                value: exponentialEquation[0] * Math.exp(exponentialEquation[1] * i)
-              }))}
+              data={subSet.map(regressionFormula)}
               x={dd => xScale(xValue(dd))}
               y={dd => yScale(yValue(dd))}
               stroke={theme.colors.primary}
               strokeWidth={2}
               style={{ pointerEvents: 'none' }}
               opacity={0.5}
+              curve={curveMonotoneX}
             />
           )}
           <Bar
