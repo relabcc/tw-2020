@@ -1,3 +1,3 @@
-import Page from '../containers/HomePage'
+import Page from '../containers/DrawPage'
 
 export default Page

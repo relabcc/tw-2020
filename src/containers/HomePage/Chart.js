@@ -54,6 +54,12 @@ const Chart = ({
         startIndex={startIndex}
         dateFormater={getDateTransformer(id)}
         regressionFormula={formula}
+        margin={{
+          top: 10,
+          left: 10,
+          bottom: 10,
+          right: 10,
+        }}
       />
     </Box>
   }

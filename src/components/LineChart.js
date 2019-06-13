@@ -3,8 +3,11 @@ import { Line, LinePath, Bar } from '@vx/shape';
 import { scaleTime, scaleLinear } from '@vx/scale';
 import { withTooltip, Tooltip } from '@vx/tooltip';
 import { localPoint } from '@vx/event';
-import { extent, bisector } from 'd3-array';
 import { curveMonotoneX } from '@vx/curve';
+import { AxisLeft, AxisBottom } from '@vx/axis';
+import { Group } from '@vx/group';
+import { extent, bisector } from 'd3-array';
+import format from 'date-fns/format'
 
 import theme from './ThemeProvider/theme';
 
@@ -12,6 +15,19 @@ import theme from './ThemeProvider/theme';
 const xValue = d => new Date(d.date);
 const yValue = d => d.value;
 const bisectDate = bisector(d => new Date(d.date)).left;
+
+// responsive utils for axis ticks
+function numTicksForHeight(height) {
+  if (height <= 300) return 3;
+  if (300 < height && height <= 600) return 5;
+  return 10;
+}
+
+function numTicksForWidth(width) {
+  if (width <= 300) return 2;
+  if (300 < width && width <= 400) return 5;
+  return 10;
+}
 
 class LineChart extends PureComponent {
   handleTooltip = ({ event, data, xValue, xScale, yScale }) => {
@@ -36,6 +52,7 @@ class LineChart extends PureComponent {
     const {
       width,
       height,
+      margin,
       data,
       hideTooltip,
       tooltipData,
@@ -44,19 +61,20 @@ class LineChart extends PureComponent {
       dateFormater,
       startIndex,
       regressionFormula,
+      showAxis,
     } = this.props;
 
     // bounds
-    const xMax = width * 0.9;
-    const yMax = height * 0.9;
+    const xMax = width - margin.left - margin.right;
+    const yMax = height - margin.top - margin.bottom;
 
     // scales
     const xScale = scaleTime({
-      range: [0, xMax],
+      range: [margin.left, width - margin.right],
       domain: extent(data, xValue)
     });
     const yScale = scaleLinear({
-      range: [yMax, height * 0.1],
+      range: [height - margin.bottom, margin.top],
       domain: extent(data, yValue)
     });
 
@@ -64,6 +82,24 @@ class LineChart extends PureComponent {
     return (
       <div>
         <svg width={width} height={height}>
+          {showAxis && (
+            <Group>
+              <AxisLeft
+                top={0}
+                left={margin.left * 0.8}
+                scale={yScale}
+                hideZero
+                numTicks={numTicksForHeight(height)}
+              />
+              <AxisBottom
+                top={height - margin.bottom}
+                left={margin.left / 2}
+                scale={xScale}
+                numTicks={6}
+                label="Time"
+              />
+            </Group>
+          )}
           <LinePath
             data={data}
             x={dd => xScale(xValue(dd))}
@@ -92,10 +128,10 @@ class LineChart extends PureComponent {
             />
           )}
           <Bar
-            x={0}
-            y={0}
+            x={margin.left}
+            y={margin.top}
             width={xMax}
-            height={height}
+            height={yMax}
             fill="transparent"
             data={data}
             onTouchStart={event =>
@@ -130,7 +166,7 @@ class LineChart extends PureComponent {
           {tooltipData && (
             <g>
               <Line
-                from={{ x: tooltipLeft, y: 0 }}
+                from={{ x: tooltipLeft, y: margin.top }}
                 to={{ x: tooltipLeft, y: yMax }}
                 stroke={theme.colors.primary}
                 strokeWidth={2}
@@ -186,6 +222,17 @@ class LineChart extends PureComponent {
       </div>
     );
   }
+}
+
+LineChart.defaultProps = {
+  startIndex: 0,
+  dateFormater: (d) => format(d, 'YYYY'),
+  margin: {
+    top: 10,
+    bottom: 40,
+    left: 50,
+    right: 20,
+  },
 }
 
 export default withTooltip(LineChart)
