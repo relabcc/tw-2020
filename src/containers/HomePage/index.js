@@ -107,6 +107,10 @@ class IndexPage extends PureComponent {
           <ReactTable
             data={allData}
             filterable
+            defaultFilterMethod={(filter, row) => {
+              const id = filter.pivotId || filter.id;
+              return row[id] !== undefined ? String(row[id]).includes(filter.value) : true;
+            }}
             sortable={false}
             getTdProps={() => ({
               style: {
